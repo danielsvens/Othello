@@ -46,8 +46,8 @@ class Grid:
         return coordinates
 
     def start_positions(self):
-        # 1 White piece
-        # 2 Black piece
+        # 'w' White piece
+        # 'b' Black piece
 
         self.grid[3][3] = 'w'
         self.grid[3][4] = 'b'

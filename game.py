@@ -9,8 +9,8 @@ from logger import Logger
 class Game:
     """
     #    TODO:
-    #    -> MouseOver on valid moves
-    #    -> Create valid moves
+    #    -> MouseOver on valid moves >> DONE
+    #    -> Create valid moves >> DONE
     #    -> Add sound effects
     #    -> Add start game menu
     #    -> Add overlay / pieces gathered / UI
@@ -65,8 +65,11 @@ class Game:
         self.board = self.grid.get_rect()
         self.pieces.positions(self.grid.coordinates(self.size))
 
-    def intro(self):
-        pass
+    def update_board(self, ):
+        # Keep screen updated for new size
+        self.grid.update_grid(self.screen, self.size)
+        self.pieces.positions(self.grid.coordinates(self.size))
+        self.board = self.grid.get_rect()
 
     def start_game(self):
         return self.main()
@@ -114,8 +117,7 @@ class Game:
 
                         # Grid collision
                         if rect.collidepoint(pg.mouse.get_pos()):
-
-                            move = self.pieces.calc_valid_moves(self.grid.get_grid())
+                            move = self.pieces.calc_valid_moves('w', self.grid.get_grid())
                             if move[row][column] == 'w':
                                 print('legal move')
 
@@ -126,6 +128,8 @@ class Game:
 
                                     self.grid.add_piece(row, column, 'w')
                                     self.log.console('added piece')
+                                    self.pieces.flip('w', row, column, self.grid.get_grid())
+                                    self.update_board()
                                 else:
                                     # TODO: Maybe add seperate lists for black pieces and white pieces ? ! ?
                                     self.log.console('pieces on board: {}'.format(len(self.pieces.circles)))
@@ -135,13 +139,9 @@ class Game:
                         column += 1
 
                 if event.type == pg.VIDEORESIZE:
-
-                    # Keep screen updated for new size
                     self.screen = pg.display.set_mode((event.w, event.h), pg.RESIZABLE)
                     self.size = self.screen.get_width(), self.screen.get_height()
-                    self.grid.update_grid(self.screen, self.size)
-                    self.pieces.positions(self.grid.coordinates(self.size))
-                    self.board = self.grid.get_rect()
+                    self.update_board()
 
             # SECTION EVENTS END
 

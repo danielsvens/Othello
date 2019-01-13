@@ -40,35 +40,36 @@ class Piece:
         for piece in self.circles:
             pg.draw.circle(screen, piece[0], piece[1], piece[2])
 
-    def calc_valid_moves(self, board):
+    def calc_valid_moves(self, player, board):
         valid = [['#' for _ in range(8)] for _ in range(8)]
 
         for row in range(8):
             for column in range(8):
                 if board[row][column] == '#':
-                    nw = self.valid_move(-1, -1, row, column, board)
-                    nn = self.valid_move(-1, 0, row, column, board)
-                    ne = self.valid_move(-1, 1, row, column, board)
+                    nw = self.valid_move(player, -1, -1, row, column, board)
+                    nn = self.valid_move(player, -1, 0, row, column, board)
+                    ne = self.valid_move(player, -1, 1, row, column, board)
 
-                    ww = self.valid_move(0, -1, row, column, board)
-                    ee = self.valid_move(0, 1, row, column, board)
+                    ww = self.valid_move(player, 0, -1, row, column, board)
+                    ee = self.valid_move(player, 0, 1, row, column, board)
 
-                    sw = self.valid_move(1, -1, row, column, board)
-                    ss = self.valid_move(1, 0, row, column, board)
-                    se = self.valid_move(1, 1, row, column, board)
+                    sw = self.valid_move(player, 1, -1, row, column, board)
+                    ss = self.valid_move(player, 1, 0, row, column, board)
+                    se = self.valid_move(player, 1, 1, row, column, board)
 
                     if nw or nn or ne or ww or ee or sw or ss or se:
-                        valid[row][column] = 'w'
+                        valid[row][column] = player
 
         return valid
 
-    def valid_move(self, x, y, row, column, board):
+    def valid_move(self, player, x, y, row, column, board):
         if row + x < 0 or row + x > 7:
             return False
 
         if column + y < 0 or column + y > 7:
             return False
 
+        # TODO: Change 'b' to other player logic
         if board[row + x][column + y] != 'b':
             return False
 
@@ -78,10 +79,10 @@ class Piece:
         if column + (y * 2) < 0 or column + (y * 2) > 7:
             return False
 
-        return self.match(x, y, row + (x * 2), column + (y * 2), board)
+        return self.match(player, x, y, row + (x * 2), column + (y * 2), board)
 
-    def match(self, x, y, row, column, board):
-        if board[row][column] == 'w':
+    def match(self, player, x, y, row, column, board):
+        if board[row][column] == player:
             return True
 
         if row + x < 0 or row + x > 7:
@@ -90,5 +91,36 @@ class Piece:
         if column + y < 0 or column + y > 7:
             return False
 
-        return self.match(x, y, row + x, column + y, board)
+        return self.match(player, x, y, row + x, column + y, board)
 
+    def flip(self, player, row, column, board):
+        self.flip_pieces(player, -1, -1, row, column, board)
+        self.flip_pieces(player, -1, 0, row, column, board)
+        self.flip_pieces(player, -1, 1, row, column, board)
+
+        self.flip_pieces(player, 0, -1, row, column, board)
+        self.flip_pieces(player, 0, 1, row, column, board)
+
+        self.flip_pieces(player, 1, -1, row, column, board)
+        self.flip_pieces(player, 1, 0, row, column, board)
+        self.flip_pieces(player, 1, 1, row, column, board)
+
+    def flip_pieces(self, player, x, y, row, column, board):
+
+        if row + x < 0 or row + x > 7:
+            return False
+
+        if column + y < 0 or column + y > 7:
+            return False
+
+        if board[row + x][column + y] == '#':
+            return False
+
+        if board[row + x][column + y] == player:
+            return True
+        else:
+            if self.flip_pieces(player, x, y, row + x, column + y, board):
+                board[row + x][column + y] = player
+                return True
+            else:
+                return False
