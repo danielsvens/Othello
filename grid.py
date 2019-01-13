@@ -5,12 +5,12 @@ class Grid:
 
     def __init__(self):
         self.margin = 4
-        self.grid = [[0 for _ in range(8)] for _ in range(8)]
+        self.grid = [['#' for _ in range(8)] for _ in range(8)]
         self.start_positions()
 
         self.rect_objects = list()
 
-    def draw_grid(self, screen, position):
+    def update_grid(self, screen, position):
 
         objects = list()
 
@@ -49,13 +49,25 @@ class Grid:
         # 1 White piece
         # 2 Black piece
 
-        self.grid[3][3] = 1
-        self.grid[3][4] = 2
-        self.grid[4][3] = 2
-        self.grid[4][4] = 1
+        self.grid[3][3] = 'w'
+        self.grid[3][4] = 'b'
+        self.grid[4][3] = 'b'
+        self.grid[4][4] = 'w'
 
     def get_rect(self):
         return self.rect_objects
 
     def add_piece(self, x, y, piece):
         self.grid[x][y] = piece
+
+    def draw_grid(self, screen):
+        for grid in self.rect_objects:
+            pg.draw.rect(screen, (0, 255, 100), grid)
+
+    def get_grid_coords(self, x, y):
+        return self.grid[x][y]
+
+    def get_grid(self):
+        return self.grid
+
+

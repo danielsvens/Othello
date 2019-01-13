@@ -15,14 +15,12 @@ class Game:
     #    -> Add start game menu
     #    -> Add overlay / pieces gathered / UI
     #    -> Finish Console
+    #    -> Add AI
     #    -> Multiplayer
     #        >> Host, server??
     #        >> Join/host menu
-    #        >> networking log
     #        >> log to console
     #        >> 2 player mode
-    #    -> Add AI
-    #    ->
     """
 
     def __init__(self):
@@ -63,10 +61,9 @@ class Game:
         self.pieces = Piece(self.grid.grid)
 
         # setup grid, coordinates andthe pieces
-        self.grid.draw_grid(self.screen, self.size)
-        self.board = self.grid.rect_objects
-        coordinates = self.grid.coordinates(self.size)
-        self.pieces.positions(coordinates)
+        self.grid.update_grid(self.screen, self.size)
+        self.board = self.grid.get_rect()
+        self.pieces.positions(self.grid.coordinates(self.size))
 
     def intro(self):
         pass
@@ -105,43 +102,62 @@ class Game:
                             self.open_console = True
 
                 if event.type == pg.MOUSEBUTTONDOWN:
-                    for grid in self.board:
-                        if grid.collidepoint(pg.mouse.get_pos()):
-                            new_piece = [self.white, (int(grid[0] + grid[2] / 2),
-                                                      int(grid[1] + grid[3] / 2)),
-                                                      int(grid[3] / 2.5)]
 
-                            if new_piece not in self.pieces.circles:
-                                self.pieces.circles.append(new_piece)
-                                self.log.console('added piece')
-                            # TODO: Maybe add seperate lists for black pieces and white pieces ? ! ?
+                    # Get mapped row, column to each rectangle
+                    row = 0
+                    column = 0
 
-                            self.log.console('pieces on board: {}'.format(len(self.pieces.circles)))
+                    for rect in self.board:
+                        if column > 7:
+                            column = 0
+                            row += 1
+
+                        # Grid collision
+                        if rect.collidepoint(pg.mouse.get_pos()):
+
+                            move = self.pieces.calc_valid_moves(self.grid.get_grid())
+                            if move[row][column] == 'w':
+                                print('legal move')
+
+                                if self.grid.get_grid_coords(row, column) == '#':
+                                    self.pieces.circles.append([self.white, (int(rect[0] + rect[2] / 2),
+                                                                             int(rect[1] + rect[3] / 2)),
+                                                                             int(rect[3] / 2.5)])
+
+                                    self.grid.add_piece(row, column, 'w')
+                                    self.log.console('added piece')
+                                else:
+                                    # TODO: Maybe add seperate lists for black pieces and white pieces ? ! ?
+                                    self.log.console('pieces on board: {}'.format(len(self.pieces.circles)))
+                            else:
+                                print('illegal move')
+
+                        column += 1
 
                 if event.type == pg.VIDEORESIZE:
+
                     # Keep screen updated for new size
-                    # FIXME Screen doesn't update right while resizing
                     self.screen = pg.display.set_mode((event.w, event.h), pg.RESIZABLE)
-                    self.grid.draw_grid(self.screen, self.size)
+                    self.size = self.screen.get_width(), self.screen.get_height()
+                    self.grid.update_grid(self.screen, self.size)
+                    self.pieces.positions(self.grid.coordinates(self.size))
                     self.board = self.grid.get_rect()
 
             # SECTION EVENTS END
 
             # SECTION GRID
-            for grid in self.board:
-                pg.draw.rect(self.screen, (0, 255, 100), grid)
+
+            self.grid.draw_grid(self.screen)
 
             # SECTION END GRID
 
             # SECTION PIECES
 
-            # print(len(self.pieces.get_pieces()))
-            for piece in self.pieces.get_pieces():
-                pg.draw.circle(self.screen, piece[0], piece[1], 38)
+            self.pieces.draw_pieces(self.screen)
 
             # SECTION END PIECES
 
-            # -> FIXME
+            # -> FIXME: Console is not finished.
             if self.open_console:
                 self.screen.blit(self.console.get_surface(), (0, 0))
 
