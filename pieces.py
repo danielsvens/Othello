@@ -63,14 +63,18 @@ class Piece:
         return valid
 
     def valid_move(self, player, x, y, row, column, board):
+        if player == 'w':
+            other = 'b'
+        else:
+            other = 'w'
+
         if row + x < 0 or row + x > 7:
             return False
 
         if column + y < 0 or column + y > 7:
             return False
 
-        # TODO: Change 'b' to other player logic
-        if board[row + x][column + y] != 'b':
+        if board[row + x][column + y] != other:
             return False
 
         if row + (x * 2) < 0 or row + (x * 2) > 7:
