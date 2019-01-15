@@ -196,6 +196,8 @@ class Game:
                 if event.type == pg.VIDEORESIZE:
                     self.screen = pg.display.set_mode((event.w, event.h), pg.RESIZABLE)
                     self.size = self.screen.get_width(), self.screen.get_height()
+                    self.GAME_ENDED_CENTER = self.GAME_ENDED.get_rect(
+                        center=(self.screen.get_width() / 2, self.screen.get_height() / 2))
                     self.update_board()
 
             # SECTION EVENTS END
@@ -212,8 +214,8 @@ class Game:
                 self.screen.blit(self.GAME_ENDED, (self.screen.get_width() / 4, self.screen.get_height() / 4))
 
             # -> FIXME: Console is not finished.
-            if self.open_console:
-                self.screen.blit(self.console.get_surface(), self.text_rect)
+            # if self.open_console:
+            #    self.screen.blit(self.console.get_surface(), self.text_rect)
 
             # Update pieces on board
             self.black_pieces, self.white_pieces = self.grid.count_pieces_on_board()
