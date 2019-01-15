@@ -62,7 +62,7 @@ class Game:
         self.pieces = Piece(self.grid.grid)
 
         # Player white: 'w' black: 'b'
-        self.current_player = 'w'
+        self.current_player = 'b'
 
         # setup grid, coordinates and the pieces
         self.grid.update_grid(self.screen, self.size)
@@ -70,13 +70,15 @@ class Game:
         self.pieces.positions(self.grid.coordinates(self.size))
 
         # Overlay
+        self.black_pieces, self.white_pieces = self.grid.count_pieces_on_board()
         pg.font.init()
         self.font = pg.font.SysFont('Verdana', 24)
         self.overlay = None
         self.end_font = pg.font.SysFont('Comic Sans MS', 150)
         self.GAME_ENDED = self.end_font.render('GAME ENDED', True, self.blue)
         self.GAME_ENDED_CENTER = self.GAME_ENDED.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 2))
-
+        self.white_pieces_on_board = self.font.render('white: {}'.format(self.white_pieces), True, self.blue)
+        self.black_pieces_on_board = self.font.render('black: {}'.format(self.black_pieces), True, self.blue)
         self.end_game = False
 
     def update_board(self):
@@ -87,6 +89,23 @@ class Game:
 
     def start_game(self):
         return self.main()
+
+    def highlight_legal_moves(self):
+        row = 0
+        column = 0
+
+        for rect in self.board:
+            if column > 7:
+                column = 0
+                row += 1
+
+            if rect.collidepoint(pg.mouse.get_pos()):
+                move = self.pieces.calc_valid_moves(self.current_player, self.grid.get_grid())
+
+                if move[row][column] == self.current_player:
+                    pg.draw.rect(self.screen, (0, 255, 200), rect)
+
+            column += 1
 
     def check_legal_moves_left(self, move):
         count = 0
@@ -187,6 +206,8 @@ class Game:
             self.pieces.draw_pieces(self.screen)
 
             self.screen.blit(self.overlay, ((self.screen.get_width() / 30), self.screen.get_height() / 7))
+            self.screen.blit(self.white_pieces_on_board, ((self.screen.get_width() / 30), self.screen.get_height() / 5))
+            self.screen.blit(self.black_pieces_on_board, ((self.screen.get_width() / 30), self.screen.get_height() / 4))
             if self.end_game:
                 self.screen.blit(self.GAME_ENDED, (self.screen.get_width() / 4, self.screen.get_height() / 4))
 
@@ -194,7 +215,12 @@ class Game:
             if self.open_console:
                 self.screen.blit(self.console.get_surface(), self.text_rect)
 
-            print(self.grid.rect_objects[-1])
+            # Update pieces on board
+            self.black_pieces, self.white_pieces = self.grid.count_pieces_on_board()
+            self.white_pieces_on_board = self.font.render('white: {}'.format(self.white_pieces), True, self.blue)
+            self.black_pieces_on_board = self.font.render('black: {}'.format(self.black_pieces), True, self.blue)
+
+            self.highlight_legal_moves()
 
             pg.display.update()
             self.clock.tick(self.fps)

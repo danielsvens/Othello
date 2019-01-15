@@ -70,4 +70,17 @@ class Grid:
     def get_grid(self):
         return self.grid
 
+    def count_pieces_on_board(self):
+        black, white = 0, 0
+
+        for row in self.grid:
+            for column in row:
+                if column == 'w':
+                    white += 1
+                elif column == 'b':
+                    black += 1
+
+        return black, white
+
+
 
