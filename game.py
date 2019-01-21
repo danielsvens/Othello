@@ -9,8 +9,6 @@ from logger import Logger
 class Game:
     """
     #    TODO:
-    #    -> MouseOver on valid moves >> DONE
-    #    -> Create valid moves >> DONE
     #    -> Add sound effects
     #    -> Add start game menu
     #    -> Add overlay / pieces gathered / UI
@@ -169,7 +167,7 @@ class Game:
                             move = self.pieces.calc_valid_moves(self.current_player, self.grid.get_grid())
 
                             if move[row][column] == self.current_player:
-                                print('legal move')
+                                self.log.console('legal move')
 
                                 if self.grid.get_grid_coords(row, column) == '#':
                                     self.pieces.circles.append([self.white, (int(rect[0] + rect[2] / 2),
@@ -189,7 +187,7 @@ class Game:
                                 else:
                                     self.current_player = 'w'
                             else:
-                                print('illegal move')
+                                self.log.console('illegal move')
 
                         column += 1
 
