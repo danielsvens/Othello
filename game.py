@@ -4,6 +4,7 @@ from grid import Grid
 from pieces import Piece
 from console import Console
 from logger import Logger
+from chat import ChatBox
 
 
 class Game:
@@ -79,6 +80,11 @@ class Game:
         self.black_pieces_on_board = self.font.render('black: {}'.format(self.black_pieces), True, self.blue)
         self.end_game = False
 
+        # Messaging
+        self.chat_font = pg.font.SysFont('Verdana', 14, bold=True)
+        self.chat_bg = pg.Rect
+        self.chat_box = ChatBox(self.chat_font)
+
     def update_board(self):
         # Keep screen updated for new size
         self.grid.update_grid(self.size)
@@ -118,13 +124,50 @@ class Game:
         width_1, height_1, pos_x_1, pos_y_1 = self.grid.rect_objects[0]
         width_2, height_2, pos_x_2, pos_y_2 = self.grid.rect_objects[-1]
 
-        pg.draw.rect(self.screen, (61, 43, 49), [width_1 + 4, height_1 + 4, (width_2 - width_1) + pos_x_2, (height_2 - height_1) + pos_y_2])
+        pg.draw.rect(self.screen, (30, 30, 30), [width_1 + 4, height_1 + 4, (width_2 - width_1) + pos_x_2, (height_2 - height_1) + pos_y_2])
 
     def info_section(self):
         width_1, height_1, pos_x_1, pos_y_1 = self.grid.rect_objects[0]
         width_2, height_2, pos_x_2, pos_y_2 = self.grid.rect_objects[-1]
+        width_pos = self.screen.get_width() / 25
 
-        pg.draw.rect(self.screen, (61, 43, 49), [self.screen.get_width() / 50, height_1, (width_2 - width_1) - (pos_x_2 * 2) , (height_2 - height_1) + pos_y_2 + 4])
+        pg.draw.rect(self.screen, (30, 30, 30),
+                     (width_pos + 4, height_1 + 4, (width_2 - width_1) - (pos_x_2 * 2),
+                      (height_2 - height_1 * 4)), 10)
+
+        pg.draw.rect(self.screen, (61, 43, 49, 0.8), (width_pos,
+                                                      height_1 + 4, (width_2 - width_1) - (pos_x_2 * 2),
+                                                      (height_2 - height_1 * 4)))
+
+        pg.draw.rect(self.screen, (76, 87, 89, 0.8),
+                     (width_pos, height_1, (width_2 - width_1) - (pos_x_2 * 2),
+                      (height_2 - height_1 * 4)), 10)
+
+        pg.draw.rect(self.screen, (34, 35, 35),
+                     (width_pos + 4, height_1 + 4, (width_2 - width_1) - (pos_x_2 * 2) - 8,
+                      (height_2 - height_1 * 4 - 8)), 3)
+
+    def chat_window(self):
+        width_1, height_1, pos_x_1, pos_y_1 = self.grid.rect_objects[0]
+        width_2, height_2, pos_x_2, pos_y_2 = self.grid.rect_objects[-1]
+        width_pos = self.screen.get_width() / 25
+
+        pg.draw.rect(self.screen, (30, 30, 30),
+                     (width_pos + 4, (height_2 - height_1 * 2 - pos_y_2 / 2 + 8), (width_2 - width_1) - (pos_x_2 * 2),
+                      (height_2 - (height_2 - height_1 * 2 - pos_y_2 / 2 + 4)) + pos_y_2), 10)
+
+        self.chat_bg = pg.draw.rect(self.screen, (61, 43, 49, 0.8), (width_pos + 4, (height_2 - height_1 * 2 - pos_y_2 / 2 + 4),
+                                                      (width_2 - width_1) - (pos_x_2 * 2),
+                                                      (height_2 - (height_2 - height_1 * 2 - pos_y_2 / 2 + 4)) + pos_y_2))
+
+        pg.draw.rect(self.screen, (76, 87, 89, 0.8),
+                     (width_pos, (height_2 - height_1 * 2 - pos_y_2 / 2 + 4), (width_2 - width_1) - (pos_x_2 * 2),
+                      (height_2 - (height_2 - height_1 * 2 - pos_y_2 / 2 + 4)) + pos_y_2), 10)
+
+        pg.draw.rect(self.screen, (34, 35, 35),
+                     (width_pos + 4, (height_2 - height_1 * 2 - pos_y_2 / 2 + 8),
+                      (width_2 - width_1) - (pos_x_2 * 2) - 8,
+                      (height_2 - (height_2 - height_1 * 2 - pos_y_2 / 2 + 12)) + pos_y_2), 3)
 
     def main(self):
 
@@ -156,6 +199,8 @@ class Game:
                             self.open_console = False
                         else:
                             self.open_console = True
+
+                self.chat_box.handle_event(event, self.chat_bg, self.screen)
 
                 if event.type == pg.MOUSEBUTTONDOWN:
 
@@ -206,12 +251,15 @@ class Game:
             # Draw screen
             self.bg_rect()
             self.info_section()
+            self.chat_window()
             self.grid.draw_grid(self.screen)
             self.pieces.draw_pieces(self.screen)
+            self.chat_box.draw(self.screen, self.chat_bg)
+            self.chat_box.update(self.screen, self.chat_bg)
 
-            self.screen.blit(self.overlay, ((self.screen.get_width() / 30), self.screen.get_height() / 7))
-            self.screen.blit(self.white_pieces_on_board, ((self.screen.get_width() / 30), self.screen.get_height() / 5))
-            self.screen.blit(self.black_pieces_on_board, ((self.screen.get_width() / 30), self.screen.get_height() / 4))
+            self.screen.blit(self.overlay, ((self.screen.get_width() / 15), self.screen.get_height() / 7))
+            self.screen.blit(self.white_pieces_on_board, ((self.screen.get_width() / 15), self.screen.get_height() / 5))
+            self.screen.blit(self.black_pieces_on_board, ((self.screen.get_width() / 15), self.screen.get_height() / 4))
 
             if self.end_game:
                 self.screen.blit(self.GAME_ENDED, (self.screen.get_width() / 4, self.screen.get_height() / 4))

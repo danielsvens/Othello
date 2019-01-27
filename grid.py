@@ -20,7 +20,7 @@ class Grid:
 
         for row in range(8):
             for column in range(8):
-                rect = pg.Rect([(self.margin + width / 16) * column + pos_x / 3 + 100,
+                rect = pg.Rect([(self.margin + width / 16) * column + pos_x / 3 + 130,
                                 (self.margin + height / 10) * row + pos_y / 10,
                                 width / 16, height / 10])
 
@@ -40,7 +40,7 @@ class Grid:
 
         for row in range(8):
             for column in range(8):
-                coordinates[str(row)].append([(self.margin + width / 16) * column + pos_x / 3 + 100,
+                coordinates[str(row)].append([(self.margin + width / 16) * column + pos_x / 3 + 130,
                                              (self.margin + height / 10) * row + pos_y / 10,
                                              width / 16, height / 10])
 
