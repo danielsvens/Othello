@@ -63,7 +63,7 @@ class Game:
         self.current_player = 'b'
 
         # setup grid, coordinates and the pieces
-        self.grid.update_grid(self.screen, self.size)
+        self.grid.update_grid(self.size)
         self.board = self.grid.get_rect()
         self.pieces.positions(self.grid.coordinates(self.size))
 
@@ -81,7 +81,7 @@ class Game:
 
     def update_board(self):
         # Keep screen updated for new size
-        self.grid.update_grid(self.screen, self.size)
+        self.grid.update_grid(self.size)
         self.pieces.positions(self.grid.coordinates(self.size))
         self.board = self.grid.get_rect()
 
@@ -118,7 +118,13 @@ class Game:
         width_1, height_1, pos_x_1, pos_y_1 = self.grid.rect_objects[0]
         width_2, height_2, pos_x_2, pos_y_2 = self.grid.rect_objects[-1]
 
-        pg.draw.rect(self.screen, (61, 43, 49), [width_1 + 4 , height_1 + 4, (width_2 - width_1) + pos_x_2, (height_2 - height_1) + pos_y_2])
+        pg.draw.rect(self.screen, (61, 43, 49), [width_1 + 4, height_1 + 4, (width_2 - width_1) + pos_x_2, (height_2 - height_1) + pos_y_2])
+
+    def info_section(self):
+        width_1, height_1, pos_x_1, pos_y_1 = self.grid.rect_objects[0]
+        width_2, height_2, pos_x_2, pos_y_2 = self.grid.rect_objects[-1]
+
+        pg.draw.rect(self.screen, (61, 43, 49), [self.screen.get_width() / 50, height_1, (width_2 - width_1) - (pos_x_2 * 2) , (height_2 - height_1) + pos_y_2 + 4])
 
     def main(self):
 
@@ -169,18 +175,14 @@ class Game:
                             if move[row][column] == self.current_player:
                                 self.log.console('legal move')
 
-                                if self.grid.get_grid_coords(row, column) == '#':
-                                    self.pieces.circles.append([self.white, (int(rect[0] + rect[2] / 2),
-                                                                             int(rect[1] + rect[3] / 2)),
-                                                                             int(rect[3] / 2.5)])
+                                self.pieces.circles.append([self.white, (int(rect[0] + rect[2] / 2),
+                                                                         int(rect[1] + rect[3] / 2)),
+                                                                         int(rect[3] / 2.5)])
 
-                                    self.grid.add_piece(row, column, self.current_player)
-                                    self.log.console('added piece')
-                                    self.pieces.flip(self.current_player, row, column, self.grid.get_grid())
-                                    self.update_board()
-                                else:
-                                    # TODO: Maybe add seperate lists for black pieces and white pieces ? ! ?
-                                    self.log.console('pieces on board: {}'.format(len(self.pieces.circles)))
+                                self.grid.add_piece(row, column, self.current_player)
+                                self.log.console('added piece')
+                                self.pieces.flip(self.current_player, row, column, self.grid.get_grid())
+                                self.update_board()
 
                                 if self.current_player == 'w':
                                     self.current_player = 'b'
@@ -191,6 +193,7 @@ class Game:
 
                         column += 1
 
+                # Video Resize update screen
                 if event.type == pg.VIDEORESIZE:
                     self.screen = pg.display.set_mode((event.w, event.h), pg.RESIZABLE)
                     self.size = self.screen.get_width(), self.screen.get_height()
@@ -202,12 +205,14 @@ class Game:
 
             # Draw screen
             self.bg_rect()
+            self.info_section()
             self.grid.draw_grid(self.screen)
             self.pieces.draw_pieces(self.screen)
 
             self.screen.blit(self.overlay, ((self.screen.get_width() / 30), self.screen.get_height() / 7))
             self.screen.blit(self.white_pieces_on_board, ((self.screen.get_width() / 30), self.screen.get_height() / 5))
             self.screen.blit(self.black_pieces_on_board, ((self.screen.get_width() / 30), self.screen.get_height() / 4))
+
             if self.end_game:
                 self.screen.blit(self.GAME_ENDED, (self.screen.get_width() / 4, self.screen.get_height() / 4))
 
@@ -220,8 +225,10 @@ class Game:
             self.white_pieces_on_board = self.font.render('white: {}'.format(self.white_pieces), True, self.blue)
             self.black_pieces_on_board = self.font.render('black: {}'.format(self.black_pieces), True, self.blue)
 
+            # Draw highlight
             self.highlight_legal_moves()
 
+            # Update screen
             pg.display.update()
             self.clock.tick(self.fps)
 
