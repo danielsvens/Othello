@@ -60,15 +60,15 @@ class Grid:
 
     def draw_grid(self, screen):
         color_cycle = itertools.cycle([(30, 160, 82), (19, 99, 51)])
-        counter = 0
+        counter = 1
 
         for grid in self.rect_objects:
-            counter += 1
             pg.draw.rect(screen, next(color_cycle), grid)
 
             if counter > 7:
                 next(color_cycle)
                 counter = 0
+            counter += 1
 
     def get_grid_coords(self, x, y):
         return self.grid[x][y]

@@ -5,6 +5,7 @@ from pieces import Piece
 from console import Console
 from logger import Logger
 from chat import ChatBox
+from gui import Gui
 
 
 class Game:
@@ -68,14 +69,17 @@ class Game:
         self.board = self.grid.get_rect()
         self.pieces.positions(self.grid.coordinates(self.size))
 
+        # Gui
+        self.gui = Gui()
+
         # Overlay
         self.black_pieces, self.white_pieces = self.grid.count_pieces_on_board()
         pg.font.init()
-        self.font = pg.font.SysFont('Verdana', 24)
+        self.font = pg.font.Font(os.path.join(self.BASE_DIR, 'Othello/fonts/PressStart2P-Regular.ttf'), 16)
         self.overlay = None
-        self.end_font = pg.font.SysFont('Comic Sans MS', 150)
+        self.end_font = pg.font.Font(os.path.join(self.BASE_DIR, 'Othello/fonts/PressStart2P-Regular.ttf'), 150)
         self.GAME_ENDED = self.end_font.render('GAME ENDED', True, self.blue)
-        self.GAME_ENDED_CENTER = self.GAME_ENDED.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 2))
+        self.GAME_ENDED_CENTER = self.GAME_ENDED.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 3))
         self.white_pieces_on_board = self.font.render('white: {}'.format(self.white_pieces), True, self.blue)
         self.black_pieces_on_board = self.font.render('black: {}'.format(self.black_pieces), True, self.blue)
         self.end_game = False
@@ -85,6 +89,16 @@ class Game:
         self.chat_bg = pg.Rect
         self.chat_box = ChatBox(self.chat_font)
 
+        # Start menu
+        self.logo = self.end_font.render('OTHELLO', True, self.black)
+        self.logo_pos = self.logo.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 4))
+        self.option_single = self.font.render('Singleplayer', True, self.black)
+        self.option_single_pos = self.option_single.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 3 * 2 - 50))
+        self.option_multiplayer = self.font.render('Multiplayer', True, self.black)
+        self.option_multiplayer_pos = self.option_multiplayer.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 3 * 2))
+        self.option_end = self.font.render('Quit game', True, self.black)
+        self.option_end_pos = self.option_end.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 3 * 2 + 50))
+
     def update_board(self):
         # Keep screen updated for new size
         self.grid.update_grid(self.size)
@@ -93,6 +107,72 @@ class Game:
 
     def start_game(self):
         return self.main()
+
+    def start_menu(self):
+        cool_beans = False
+
+        while not cool_beans:
+
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    quit()
+
+                # Singleplayer
+                if self.option_single_pos.collidepoint(pg.mouse.get_pos()):
+                    self.option_single = self.font.render('Singleplayer', True, self.white)
+
+                    if event.type == pg.MOUSEBUTTONDOWN:
+                        cool_beans = True
+                        self.start_game()
+                else:
+                    self.option_single = self.font.render('Singleplayer', True, self.black)
+
+                # Multiplayer
+                if self.option_multiplayer_pos.collidepoint(pg.mouse.get_pos()):
+                    self.option_multiplayer = self.font.render('Multiplayer', True, self.white)
+
+                    if event.type == pg.MOUSEBUTTONDOWN:
+                        raise NotImplementedError
+                else:
+                    self.option_multiplayer = self.font.render('Multiplayer', True, self.black)
+
+                # Quit game
+                if self.option_end_pos.collidepoint(pg.mouse.get_pos()):
+                    self.option_end = self.font.render('Quit game', True, self.white)
+
+                    if event.type == pg.MOUSEBUTTONDOWN:
+                        cool_beans = True
+                        pg.quit()
+                        quit()
+                else:
+                    self.option_end = self.font.render('Quit game', True, self.black)
+
+                if event.type == pg.VIDEORESIZE:
+                    self.screen = pg.display.set_mode((event.w, event.h), pg.RESIZABLE)
+                    self.size = self.screen.get_width(), self.screen.get_height()
+                    self.logo_pos = self.logo.get_rect(
+                        center=(self.screen.get_width() / 2, self.screen.get_height() / 4))
+                    self.option_single_pos = self.option_single.get_rect(
+                        center=(self.screen.get_width() / 2, self.screen.get_height() / 3 * 2 - 50))
+                    self.option_multiplayer_pos = self.option_multiplayer.get_rect(
+                        center=(self.screen.get_width() / 2, self.screen.get_height() / 3 * 2))
+                    self.option_end_pos = self.option_end.get_rect(
+                        center=(self.screen.get_width() / 2, self.screen.get_height() / 3 * 2 + 50))
+
+            # Background
+            self.screen.fill((19, 99, 51))
+
+            # Logo
+            self.screen.blit(self.logo, self.logo_pos)
+
+            # Menu
+            self.screen.blit(self.option_single, self.option_single_pos)
+            self.screen.blit(self.option_multiplayer, self.option_multiplayer_pos)
+            self.screen.blit(self.option_end, self.option_end_pos)
+
+            pg.display.update()
+            self.clock.tick(self.fps)
 
     def highlight_legal_moves(self):
         row = 0
@@ -119,55 +199,6 @@ class Game:
                     count += 1
         if count == 0:
             self.end_game = True
-
-    def bg_rect(self):
-        width_1, height_1, pos_x_1, pos_y_1 = self.grid.rect_objects[0]
-        width_2, height_2, pos_x_2, pos_y_2 = self.grid.rect_objects[-1]
-
-        pg.draw.rect(self.screen, (30, 30, 30), [width_1 + 4, height_1 + 4, (width_2 - width_1) + pos_x_2, (height_2 - height_1) + pos_y_2])
-
-    def info_section(self):
-        width_1, height_1, pos_x_1, pos_y_1 = self.grid.rect_objects[0]
-        width_2, height_2, pos_x_2, pos_y_2 = self.grid.rect_objects[-1]
-        width_pos = self.screen.get_width() / 25
-
-        pg.draw.rect(self.screen, (30, 30, 30),
-                     (width_pos + 4, height_1 + 4, (width_2 - width_1) - (pos_x_2 * 2),
-                      (height_2 - height_1 * 4)), 10)
-
-        pg.draw.rect(self.screen, (61, 43, 49, 0.8), (width_pos,
-                                                      height_1 + 4, (width_2 - width_1) - (pos_x_2 * 2),
-                                                      (height_2 - height_1 * 4)))
-
-        pg.draw.rect(self.screen, (76, 87, 89, 0.8),
-                     (width_pos, height_1, (width_2 - width_1) - (pos_x_2 * 2),
-                      (height_2 - height_1 * 4)), 10)
-
-        pg.draw.rect(self.screen, (34, 35, 35),
-                     (width_pos + 4, height_1 + 4, (width_2 - width_1) - (pos_x_2 * 2) - 8,
-                      (height_2 - height_1 * 4 - 8)), 3)
-
-    def chat_window(self):
-        width_1, height_1, pos_x_1, pos_y_1 = self.grid.rect_objects[0]
-        width_2, height_2, pos_x_2, pos_y_2 = self.grid.rect_objects[-1]
-        width_pos = self.screen.get_width() / 25
-
-        pg.draw.rect(self.screen, (30, 30, 30),
-                     (width_pos + 4, (height_2 - height_1 * 2 - pos_y_2 / 2 + 8), (width_2 - width_1) - (pos_x_2 * 2),
-                      (height_2 - (height_2 - height_1 * 2 - pos_y_2 / 2 + 4)) + pos_y_2), 10)
-
-        self.chat_bg = pg.draw.rect(self.screen, (61, 43, 49, 0.8), (width_pos + 4, (height_2 - height_1 * 2 - pos_y_2 / 2 + 4),
-                                                      (width_2 - width_1) - (pos_x_2 * 2),
-                                                      (height_2 - (height_2 - height_1 * 2 - pos_y_2 / 2 + 4)) + pos_y_2))
-
-        pg.draw.rect(self.screen, (76, 87, 89, 0.8),
-                     (width_pos, (height_2 - height_1 * 2 - pos_y_2 / 2 + 4), (width_2 - width_1) - (pos_x_2 * 2),
-                      (height_2 - (height_2 - height_1 * 2 - pos_y_2 / 2 + 4)) + pos_y_2), 10)
-
-        pg.draw.rect(self.screen, (34, 35, 35),
-                     (width_pos + 4, (height_2 - height_1 * 2 - pos_y_2 / 2 + 8),
-                      (width_2 - width_1) - (pos_x_2 * 2) - 8,
-                      (height_2 - (height_2 - height_1 * 2 - pos_y_2 / 2 + 12)) + pos_y_2), 3)
 
     def main(self):
 
@@ -200,7 +231,7 @@ class Game:
                         else:
                             self.open_console = True
 
-                self.chat_box.handle_event(event, self.chat_bg, self.screen)
+                self.chat_box.handle_event(event, self.chat_bg)
 
                 if event.type == pg.MOUSEBUTTONDOWN:
 
@@ -243,15 +274,15 @@ class Game:
                     self.screen = pg.display.set_mode((event.w, event.h), pg.RESIZABLE)
                     self.size = self.screen.get_width(), self.screen.get_height()
                     self.GAME_ENDED_CENTER = self.GAME_ENDED.get_rect(
-                        center=(self.screen.get_width() / 2, self.screen.get_height() / 2))
+                        center=(self.screen.get_width() / 2, self.screen.get_height() / 3))
                     self.update_board()
 
             # SECTION EVENTS END
 
             # Draw screen
-            self.bg_rect()
-            self.info_section()
-            self.chat_window()
+            self.gui.bg_rect(self.grid, self.screen)
+            self.gui.info_section(self.grid, self.screen)
+            self.chat_bg = self.gui.chat_window(self.grid, self.screen)
             self.grid.draw_grid(self.screen)
             self.pieces.draw_pieces(self.screen)
             self.chat_box.draw(self.screen, self.chat_bg)
@@ -262,7 +293,7 @@ class Game:
             self.screen.blit(self.black_pieces_on_board, ((self.screen.get_width() / 15), self.screen.get_height() / 4))
 
             if self.end_game:
-                self.screen.blit(self.GAME_ENDED, (self.screen.get_width() / 4, self.screen.get_height() / 4))
+                self.screen.blit(self.GAME_ENDED, self.GAME_ENDED_CENTER)
 
             # -> FIXME: Console is not finished.
             # if self.open_console:
@@ -285,4 +316,4 @@ class Game:
 
 if __name__ == '__main__':
     game = Game()
-    game.start_game()
+    game.start_menu()
