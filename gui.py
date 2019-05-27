@@ -3,6 +3,8 @@ import pygame as pg
 
 class Gui:
 
+    # This can be optimized. storing rect in variable but should also update on screen size change
+
     @staticmethod
     def bg_rect(grid, screen):
         width_1, height_1, pos_x_1, pos_y_1 = grid.rect_objects[0]

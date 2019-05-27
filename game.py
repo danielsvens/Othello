@@ -6,6 +6,7 @@ from console import Console
 from logger import Logger
 from chat import ChatBox
 from gui import Gui
+from player_piece import PlayerPiece
 
 
 class Game:
@@ -44,6 +45,7 @@ class Game:
         # Sound Effects
         pg.mixer.pre_init(44100, -16, 1, 512)
         pg.mixer.init()
+        self.place_piece = pg.mixer.Sound(os.path.join(self.BASE_DIR, 'Othello/sounds/place_piece.wav'))
 
         # Sprites if we need any ???
         self.all_sprites = pg.sprite.Group()
@@ -61,8 +63,8 @@ class Game:
         self.grid = Grid()
         self.pieces = Piece(self.grid.grid)
 
-        # Player white: 'w' black: 'b'
-        self.current_player = 'b'
+        # Player white: PlayerPiece.WHITE black: PlayerPiece.BLACK
+        self.current_player = PlayerPiece.BLACK
 
         # setup grid, coordinates and the pieces
         self.grid.update_grid(self.size)
@@ -206,7 +208,7 @@ class Game:
         while not self.done:
 
             self.overlay = self.font.render(
-                'Current player: white' if self.current_player == 'w' else 'Current player: black', True, self.blue)
+                'Current player: white' if self.current_player == PlayerPiece.WHITE else 'Current player: black', True, self.blue)
 
             self.check_legal_moves_left(self.pieces.calc_valid_moves(self.current_player, self.grid.get_grid()))
 
@@ -250,6 +252,7 @@ class Game:
 
                             if move[row][column] == self.current_player:
                                 self.log.console('legal move')
+                                self.place_piece.play()
 
                                 self.pieces.circles.append([self.white, (int(rect[0] + rect[2] / 2),
                                                                          int(rect[1] + rect[3] / 2)),
@@ -260,10 +263,10 @@ class Game:
                                 self.pieces.flip(self.current_player, row, column, self.grid.get_grid())
                                 self.update_board()
 
-                                if self.current_player == 'w':
-                                    self.current_player = 'b'
+                                if self.current_player == PlayerPiece.WHITE:
+                                    self.current_player = PlayerPiece.BLACK
                                 else:
-                                    self.current_player = 'w'
+                                    self.current_player = PlayerPiece.WHITE
                             else:
                                 self.log.console('illegal move')
 

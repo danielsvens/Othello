@@ -1,12 +1,13 @@
 import pygame as pg
 import itertools
+from player_piece import PlayerPiece
 
 
 class Grid:
 
     def __init__(self):
         self.margin = 4
-        self.grid = [['#' for _ in range(8)] for _ in range(8)]
+        self.grid = [[PlayerPiece.EMPTY for _ in range(8)] for _ in range(8)]
         self.start_positions()
 
         self.rect_objects = list()
@@ -47,10 +48,10 @@ class Grid:
         return coordinates
 
     def start_positions(self):
-        self.grid[3][3] = 'w'
-        self.grid[3][4] = 'b'
-        self.grid[4][3] = 'b'
-        self.grid[4][4] = 'w'
+        self.grid[3][3] = PlayerPiece.WHITE
+        self.grid[3][4] = PlayerPiece.BLACK
+        self.grid[4][3] = PlayerPiece.BLACK
+        self.grid[4][4] = PlayerPiece.WHITE
 
     def get_rect(self):
         return self.rect_objects
@@ -81,12 +82,9 @@ class Grid:
 
         for row in self.grid:
             for column in row:
-                if column == 'w':
+                if column == PlayerPiece.WHITE:
                     white += 1
-                elif column == 'b':
+                elif column == PlayerPiece.BLACK:
                     black += 1
 
         return black, white
-
-
-

@@ -1,4 +1,5 @@
 import pygame as pg
+from player_piece import PlayerPiece
 
 
 class Piece:
@@ -28,9 +29,9 @@ class Piece:
             counter_y = -1
             for o in x:
                 counter_y += 1
-                if o == 'w':
+                if o == PlayerPiece.WHITE:
                     self.create_piece(self.WHITE, coordinates[str(counter_x)][counter_y])
-                elif o == 'b':
+                elif o == PlayerPiece.BLACK:
                     self.create_piece(self.BLACK, coordinates[str(counter_x)][counter_y])
 
     def get_pieces(self):
@@ -41,11 +42,11 @@ class Piece:
             pg.draw.circle(screen, piece[0], piece[1], piece[2])
 
     def calc_valid_moves(self, player, board):
-        valid = [['#' for _ in range(8)] for _ in range(8)]
+        valid = [[PlayerPiece.EMPTY for _ in range(8)] for _ in range(8)]
 
         for row in range(8):
             for column in range(8):
-                if board[row][column] == '#':
+                if board[row][column] == PlayerPiece.EMPTY:
                     nw = self.valid_move(player, -1, -1, row, column, board)
                     nn = self.valid_move(player, -1, 0, row, column, board)
                     ne = self.valid_move(player, -1, 1, row, column, board)
@@ -63,10 +64,10 @@ class Piece:
         return valid
 
     def valid_move(self, player, x, y, row, column, board):
-        if player == 'w':
-            other = 'b'
+        if player == PlayerPiece.WHITE:
+            other = PlayerPiece.BLACK
         else:
-            other = 'w'
+            other = PlayerPiece.WHITE
 
         if row + x < 0 or row + x > 7:
             return False
@@ -117,7 +118,7 @@ class Piece:
         if column + y < 0 or column + y > 7:
             return False
 
-        if board[row + x][column + y] == '#':
+        if board[row + x][column + y] == PlayerPiece.EMPTY:
             return False
 
         if board[row + x][column + y] == player:
