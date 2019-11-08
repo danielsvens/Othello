@@ -1,19 +1,20 @@
 import pygame as pg
+import textwrap
 
 
 class ChatBox:
 
     def __init__(self, font):
-        self.text = ''
         self.font = font
         self.color = (0, 0, 0)
         self.active = False
+        self.text = ''
         self.text_surface = self.font.render(self.text, True, self.color)
+        self.text_box_height = 0
         self.sent = []
 
     def handle_event(self, event, box):
         if event.type == pg.MOUSEBUTTONDOWN:
-
             if box.collidepoint(event.pos):
                 self.active = True
             else:
@@ -32,12 +33,20 @@ class ChatBox:
                 self.text_surface = self.font.render(self.text, True, self.color)
 
     def draw(self, screen, box):
-        return screen.blit(self.text_surface, (box.x + 10, box.y + box.h - 30))
+        return screen.blit(self.text_surface, (box.x + 10, box.y + box.h - 26))
 
     def update(self, screen, box):
-        counter = 10
+        spacing = 10
+        text_buffer = []
 
-        for item in self.sent:
-            text = self.font.render('user: {}'.format(item), True, self.color)
-            screen.blit(text, (box.x + 10, box.y + counter))
-            counter += 20
+        for txt in self.sent:
+            text_buffer += textwrap.wrap(txt, box.w / 9 - 2)
+
+        for item in text_buffer:
+            text = self.font.render(f'User: {item}', True, self.color)
+            screen.blit(text, (box.x + 10, box.y + spacing))
+            spacing += 20
+
+            if spacing >= box.h:
+                self.sent.pop(0)
+                spacing -= 20

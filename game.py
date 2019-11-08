@@ -1,5 +1,7 @@
 import pygame as pg
 import os
+import threading as th
+
 from grid import Grid
 from pieces import Piece
 from console import Console
@@ -10,19 +12,6 @@ from player_piece import PlayerPiece
 
 
 class Game:
-    """
-    #    TODO:
-    #    -> Add sound effects
-    #    -> Add start game menu
-    #    -> Add overlay / pieces gathered / UI
-    #    -> Finish Console
-    #    -> Add AI
-    #    -> Multiplayer
-    #        >> Host, server??
-    #        >> Join/host menu
-    #        >> log to console
-    #        >> 2 player mode
-    """
 
     def __init__(self):
         pg.init()
@@ -35,11 +24,6 @@ class Game:
 
         self.BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-        # Initialize the console
-        self.console = Console(screen=self.screen)
-        self.open_console = False
-        self.log = Logger('console.log')
-
         self.clock = pg.time.Clock()
 
         # Sound Effects
@@ -47,14 +31,11 @@ class Game:
         pg.mixer.init()
         self.place_piece = pg.mixer.Sound(os.path.join(self.BASE_DIR, 'Othello/sounds/place_piece.wav'))
 
-        # Sprites if we need any ???
-        self.all_sprites = pg.sprite.Group()
-
         # Colors
         self.black = (0, 0, 0)
         self.white = (255, 255, 255)
         self.green = (0, 255, 100)
-        self.blue = (0, 100, 255)
+        self.dark_brown = (14, 15, 15)
 
         self.fps = 60
         self.done = False
@@ -80,16 +61,27 @@ class Game:
         self.font = pg.font.Font(os.path.join(self.BASE_DIR, 'Othello/fonts/PressStart2P-Regular.ttf'), 16)
         self.overlay = None
         self.end_font = pg.font.Font(os.path.join(self.BASE_DIR, 'Othello/fonts/PressStart2P-Regular.ttf'), 150)
-        self.GAME_ENDED = self.end_font.render('GAME ENDED', True, self.blue)
+        self.GAME_ENDED = self.end_font.render('GAME ENDED', True, self.dark_brown)
         self.GAME_ENDED_CENTER = self.GAME_ENDED.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 3))
-        self.white_pieces_on_board = self.font.render('white: {}'.format(self.white_pieces), True, self.blue)
-        self.black_pieces_on_board = self.font.render('black: {}'.format(self.black_pieces), True, self.blue)
+        self.white_pieces_on_board = self.font.render('white: {}'.format(self.white_pieces), True, self.dark_brown)
+        self.black_pieces_on_board = self.font.render('black: {}'.format(self.black_pieces), True, self.dark_brown)
         self.end_game = False
 
         # Messaging
         self.chat_font = pg.font.SysFont('Verdana', 14, bold=True)
         self.chat_bg = pg.Rect
+        self.chat_input = pg.Rect
         self.chat_box = ChatBox(self.chat_font)
+
+        # Initialize the console
+        self.console = Console(self.screen, self.chat_font)
+        self.open_console = False
+        self.log = Logger('console.log')
+
+        self.console_rect = pg.Rect(0, 0, self.screen.get_width(), self.screen.get_height() / 3)
+
+        # Setup logging thread for console
+        self.logging_thread = th.Thread(target=self.console.tail_log)
 
         # Start menu
         self.logo = self.end_font.render('OTHELLO', True, self.black)
@@ -204,16 +196,18 @@ class Game:
 
     def main(self):
 
+        self.logging_thread.start()
+
         # SECTION MAIN LOOP
         while not self.done:
 
             self.overlay = self.font.render(
-                'Current player: white' if self.current_player == PlayerPiece.WHITE else 'Current player: black', True, self.blue)
+                'Current player: white' if self.current_player == PlayerPiece.WHITE else 'Current player: black', True, self.dark_brown)
 
             self.check_legal_moves_left(self.pieces.calc_valid_moves(self.current_player, self.grid.get_grid()))
 
             # dt = self.clock.tick(self.fps) / 1000
-            self.screen.fill((255, 255, 255))
+            self.screen.fill((150, 150, 150))
             self.size = self.screen.get_width(), self.screen.get_height()
 
             # SECTION EVENTS
@@ -233,7 +227,7 @@ class Game:
                         else:
                             self.open_console = True
 
-                self.chat_box.handle_event(event, self.chat_bg)
+                self.chat_box.handle_event(event, self.chat_input)
 
                 if event.type == pg.MOUSEBUTTONDOWN:
 
@@ -285,10 +279,17 @@ class Game:
             # Draw screen
             self.gui.bg_rect(self.grid, self.screen)
             self.gui.info_section(self.grid, self.screen)
-            self.chat_bg = self.gui.chat_window(self.grid, self.screen)
+            self.chat_bg = self.gui.chat_bg(self.grid, self.screen)
+
+            if self.chat_box.active:
+                input_color = self.dark_brown
+            else:
+                input_color = (34, 35, 35)
+
+            self.chat_input = self.gui.input_box(self.grid, self.screen, input_color)
             self.grid.draw_grid(self.screen)
             self.pieces.draw_pieces(self.screen)
-            self.chat_box.draw(self.screen, self.chat_bg)
+            self.chat_box.draw(self.screen, self.chat_input)
             self.chat_box.update(self.screen, self.chat_bg)
 
             self.screen.blit(self.overlay, ((self.screen.get_width() / 15), self.screen.get_height() / 7))
@@ -298,14 +299,15 @@ class Game:
             if self.end_game:
                 self.screen.blit(self.GAME_ENDED, self.GAME_ENDED_CENTER)
 
-            # -> FIXME: Console is not finished.
-            # if self.open_console:
-            #    self.screen.blit(self.console.get_surface(), self.text_rect)
+            if self.open_console:
+                self.screen.blit(self.console.get_surface, self.console_rect)
+
+            self.console.update(self.console_rect)
 
             # Update pieces on board
             self.black_pieces, self.white_pieces = self.grid.count_pieces_on_board()
-            self.white_pieces_on_board = self.font.render('white: {}'.format(self.white_pieces), True, self.blue)
-            self.black_pieces_on_board = self.font.render('black: {}'.format(self.black_pieces), True, self.blue)
+            self.white_pieces_on_board = self.font.render('white: {}'.format(self.white_pieces), True, self.dark_brown)
+            self.black_pieces_on_board = self.font.render('black: {}'.format(self.black_pieces), True, self.dark_brown)
 
             # Draw highlight
             self.highlight_legal_moves()
